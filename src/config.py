@@ -4,7 +4,6 @@ class Config:
     # --- File Paths ---
     DATA_PATH = "data/ratings.csv"
     CKPT_DIR = "ckpt/"
-    LOG_DIR = "assets/"
 
     # --- Data & Graph Parameters ---
     TEST_SIZE = 0.2
@@ -25,4 +24,3 @@ class Config:
 
     # Ensure output directories exist when config is loaded
     os.makedirs(CKPT_DIR, exist_ok=True)
-    os.makedirs(LOG_DIR, exist_ok=True)
