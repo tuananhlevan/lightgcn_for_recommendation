@@ -38,7 +38,6 @@ class BPRDataset(Dataset):
                torch.tensor(neg_item, dtype=torch.long)
 
 def load_and_prep_movielens():
-    # Notice we are now using Config.DATA_PATH instead of 'ratings.csv'
     df = pd.read_csv(Config.DATA_PATH)
     
     df = df[df['rating'] >= 3.0].copy()
