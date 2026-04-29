@@ -5,8 +5,8 @@ import os
 # Add the src directory to the Python path so we can import our modules
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
-from train import train
-from inference import recommend_for_user
+from src.train import train
+from src.inference import recommend_for_user
 
 def main():
     parser = argparse.ArgumentParser(description="LightGCN Recommendation System")

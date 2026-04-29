@@ -22,7 +22,6 @@ def train():
 
     # 2. Initialize Model and Optimizer
     model = SimpleLightGCN(num_users, num_items).to(device)
-    model.build_graph(train_edge_index)   # precompute undirected edges once
     optimizer = torch.optim.Adam(
         model.parameters(), 
         lr=Config.LEARNING_RATE, 
