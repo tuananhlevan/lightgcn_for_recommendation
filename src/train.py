@@ -13,7 +13,7 @@ def train():
     print(f"Training on device: {device}")
 
     # 1. Load Data
-    train_edge_index, test_edge_index, num_users, num_items = load_and_prep_movielens()
+    train_edge_index, test_edge_index, num_users, num_items = load_and_prep_movielens(Config.SPLIT_TYPE)
     train_edge_index = train_edge_index.to(device)
     test_edge_index = test_edge_index.to(device)
 
@@ -22,6 +22,7 @@ def train():
 
     # 2. Initialize Model and Optimizer
     model = SimpleLightGCN(num_users, num_items).to(device)
+    model.build_graph(train_edge_index)   # precompute undirected edges once
     optimizer = torch.optim.Adam(
         model.parameters(), 
         lr=Config.LEARNING_RATE, 
@@ -69,15 +70,12 @@ def train():
 
         # Evaluation & Best Model Save
         if epoch % Config.EVAL_EPOCH == 0:
-            # Unpack all four metrics
             recall, ndcg, mrr, precision = evaluate_metrics_at_k(
                 model, train_edge_index, test_edge_index, k=Config.K
             )
             
-            # Print a clean, comprehensive log
             print(f"Epoch {epoch:03d} | Loss: {avg_loss:.4f} | Recall@{Config.K}: {recall:.4f} | NDCG@{Config.K}: {ndcg:.4f} | MRR@{Config.K}: {mrr:.4f} | Precision@{Config.K}: {precision:.4f}")
             
-            # Continue using NDCG to track the "Best Model"
             if ndcg > best_ndcg:
                 best_ndcg = ndcg
                 best_state = {

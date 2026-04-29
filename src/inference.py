@@ -24,7 +24,7 @@ def recommend_for_user(raw_user_id, top_k=5):
     
     # 1. Rebuild the graph
     print("Rebuilding graph for inference...")
-    train_edge_index, _, num_users, num_items = load_and_prep_movielens()
+    train_edge_index, _, num_users, num_items = load_and_prep_movielens(Config.SPLIT_TYPE)
     train_edge_index = train_edge_index.to(device)
     
     # Exact DataFrame mapping

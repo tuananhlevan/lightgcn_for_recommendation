@@ -7,6 +7,7 @@ class Config:
 
     # --- Data & Graph Parameters ---
     TEST_SIZE = 0.2
+    SPLIT_TYPE = "random"   # "temporal" for time-sequential split, "random" for random split
     
     # --- Model Hyperparameters ---
     EMB_DIM = 64
@@ -15,12 +16,12 @@ class Config:
     # --- Training Hyperparameters ---
     EPOCHS = 300
     LEARNING_RATE = 0.001
-    WEIGHT_DECAY = 0.0  # Set to 0.0 since we are skipping it for now
-    EVAL_EPOCH = 20     # How often we calculate Recall@20
-    SAVE_EPOCH = 50     # How often do we save model routinely
+    WEIGHT_DECAY = 0.0
+    EVAL_EPOCH = 20         # How often we calculate Recall@20
+    SAVE_EPOCH = 50         # How often do we save model routinely
     
     # --- Evaluate Hyperparameters ---
-    K = 20              # Top K
+    K = 20                  # Top K
 
     # Ensure output directories exist when config is loaded
     os.makedirs(CKPT_DIR, exist_ok=True)

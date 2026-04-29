@@ -37,7 +37,7 @@ class BPRDataset(Dataset):
                torch.tensor(pos_item, dtype=torch.long), \
                torch.tensor(neg_item, dtype=torch.long)
 
-def load_and_prep_movielens():
+def load_and_prep_movielens(split_type="random"):
     df = pd.read_csv(Config.DATA_PATH)
     
     df = df[df['rating'] >= 3.0].copy()
@@ -48,13 +48,24 @@ def load_and_prep_movielens():
     num_users = len(user_uniques)
     num_items = len(item_uniques)
     
-    train_df, test_df = train_test_split(
-        df, 
-        test_size=Config.TEST_SIZE, 
-        random_state=42, 
-        stratify=df['user_idx']
-    )
-    
+    if split_type == "temporal":
+        # Sort by time and take the last 20% per user
+        df = df.sort_values(['user_idx', 'timestamp'])
+
+        group_sizes = df.groupby('user_idx')['user_idx'].transform('size')
+        cutoff = (group_sizes * (1 - Config.TEST_SIZE)).astype(int)
+        ranks = df.groupby('user_idx').cumcount()
+
+        test_df = df[ranks >= cutoff]
+        train_df = df[ranks < cutoff]
+    else:
+        train_df, test_df = train_test_split(
+            df, 
+            test_size=Config.TEST_SIZE, 
+            random_state=42, 
+            stratify=df['user_idx']
+        )
+        
     train_edge_index = torch.tensor(
         np.array([train_df['user_idx'].values, train_df['item_idx'].values]), 
         dtype=torch.long

@@ -49,7 +49,7 @@ def evaluate_metrics_at_k(model, train_edge_index, test_edge_index, k=20):
                         first_hit_rank = rank + 1
                         
             # 1. Recall@K: Out of the user's hidden test items, how many did we find?
-            recall = hits / len(target_items)
+            recall = hits / min(len(target_items), k)
             recalls.append(recall)
             
             # 2. Precision@K: Out of the K items we recommended, how many were good?
