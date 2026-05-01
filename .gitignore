@@ -1,4 +1,5 @@
 data/*.csv
 data/*.dat
 __pycache__
+ckpt/
 load_metrics.py
