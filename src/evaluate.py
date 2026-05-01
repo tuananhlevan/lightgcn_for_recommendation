@@ -1,8 +1,9 @@
 import torch
 import numpy as np
+from tqdm import tqdm
 from collections import defaultdict
 
-def evaluate_metrics_at_k(model, train_edge_index, test_edge_index, k=20):
+def evaluate_metrics_at_k(model, train_edge_index, test_edge_index, eval_batch_size, k=20):
     """
     Evaluates the model and returns Recall@K, NDCG@K, MRR@K, and Precision@K.
     """
@@ -14,16 +15,32 @@ def evaluate_metrics_at_k(model, train_edge_index, test_edge_index, k=20):
         item = test_edge_index[1, i].item()
         test_user_dict[u].append(item)
         
+    bipartite_edges = model.get_graph(train_edge_index)
+        
     with torch.no_grad():
-        user_embs, item_embs = model(train_edge_index)
-        all_scores = torch.matmul(user_embs, item_embs.T)
+        user_embs, item_embs, _ = model(bipartite_edges)
         
-        train_users = train_edge_index[0]
-        train_items = train_edge_index[1]
-        all_scores[train_users, train_items] = -float('inf')
+        num_users = user_embs.shape[0]
+        top_k_indices_list = []
         
-        _, top_k_indices = torch.topk(all_scores, k, dim=1)
-        top_k_indices = top_k_indices.cpu().numpy()
+        pbar = tqdm(range(0, num_users, eval_batch_size), desc="Evaluating")
+        for i in pbar:
+            end_idx = min(i + eval_batch_size, num_users)
+            batch_u_embs = user_embs[i:end_idx]
+            
+            # Scores for this batch of users against ALL items
+            batch_scores = torch.matmul(batch_u_embs, item_embs.T)
+            
+            # Mask out training items for these users
+            for batch_u_idx in range(end_idx - i):
+                real_u_idx = i + batch_u_idx
+                train_items = train_edge_index[1][train_edge_index[0] == real_u_idx]
+                batch_scores[batch_u_idx, train_items] = -float('inf')
+                
+            _, batch_top_k = torch.topk(batch_scores, k, dim=1)
+            top_k_indices_list.append(batch_top_k.cpu().numpy())
+            
+        top_k_indices = np.concatenate(top_k_indices_list, axis=0)
         
         # Lists to store the metrics for each user
         recalls = []
@@ -48,15 +65,15 @@ def evaluate_metrics_at_k(model, train_edge_index, test_edge_index, k=20):
                     if first_hit_rank is None:
                         first_hit_rank = rank + 1
                         
-            # 1. Recall@K: Out of the user's hidden test items, how many did we find?
-            recall = hits / min(len(target_items), k)
+            # 1. Recall@K
+            recall = hits / len(target_items)
             recalls.append(recall)
             
-            # 2. Precision@K: Out of the K items we recommended, how many were good?
+            # 2. Precision@K
             precision = hits / k
             precisions.append(precision)
             
-            # 3. MRR@K: 1 / (Rank of first correct guess). 0 if no correct guesses.
+            # 3. MRR@K
             mrr = (1.0 / first_hit_rank) if first_hit_rank is not None else 0.0
             mrrs.append(mrr)
             

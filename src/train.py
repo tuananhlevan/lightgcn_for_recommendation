@@ -2,6 +2,7 @@ import os
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from config import Config
 from data_pipeline import load_and_prep_movielens, BPRDataset
@@ -18,28 +19,28 @@ def train():
     test_edge_index = test_edge_index.to(device)
 
     train_dataset = BPRDataset(train_edge_index.cpu(), num_items)
-    train_loader = DataLoader(train_dataset, batch_size=1024, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=Config.BATCH_SIZE, shuffle=True)
 
-    # 2. Initialize Model and Optimizer
+    # 2. Initialize Model, Graph and Optimizer
     model = SimpleLightGCN(num_users, num_items).to(device)
     optimizer = torch.optim.Adam(
         model.parameters(), 
-        lr=Config.LEARNING_RATE, 
-        weight_decay=Config.WEIGHT_DECAY
+        lr=Config.LEARNING_RATE,
     )
-
-    best_ndcg = 0.0
+    bipartite_edges = model.get_graph(train_edge_index)
 
     # 3. Training Loop
+    best_ndcg = 0.0
     for epoch in range(1, Config.EPOCHS + 1):
         model.train()
         total_loss = 0
         
-        for batch in train_loader:
+        pbar = tqdm(train_loader, desc=f"Training | Epoch [{epoch}/{Config.EPOCHS}]")
+        for batch in pbar:
             users, pos_items, neg_items = [x.to(device) for x in batch]
             optimizer.zero_grad()
             
-            user_embs, item_embs = model(train_edge_index)
+            user_embs, item_embs, emb_0 = model(bipartite_edges)
             
             batch_user_embs = user_embs[users]
             batch_pos_embs = item_embs[pos_items]
@@ -48,9 +49,20 @@ def train():
             pos_scores = (batch_user_embs * batch_pos_embs).sum(dim=1)
             neg_scores = (batch_user_embs * batch_neg_embs).sum(dim=1)
             
-            loss = -F.logsigmoid(pos_scores - neg_scores).mean()
+            u_emb_0 = emb_0[users]
+            pos_emb_0 = emb_0[pos_items + num_users]
+            neg_emb_0 = emb_0[neg_items + num_users]
+            
+            reg_loss = (1/2) * (u_emb_0.norm(2).pow(2) + 
+                                pos_emb_0.norm(2).pow(2) + 
+                                neg_emb_0.norm(2).pow(2)) / float(len(users))
+            bpr_loss = -F.logsigmoid(pos_scores - neg_scores).mean()
+            loss = bpr_loss + Config.REG_WEIGHT * reg_loss
+            
             loss.backward()
             optimizer.step()
+            
+            pbar.set_postfix_str(f"Loss: {loss.cpu().detach():.4f}")
             
             total_loss += loss.item()
             
@@ -70,10 +82,10 @@ def train():
         # Evaluation & Best Model Save
         if epoch % Config.EVAL_EPOCH == 0:
             recall, ndcg, mrr, precision = evaluate_metrics_at_k(
-                model, train_edge_index, test_edge_index, k=Config.K
+                model, train_edge_index, test_edge_index, eval_batch_size=Config.BATCH_SIZE, k=Config.K
             )
             
-            print(f"Epoch {epoch:03d} | Loss: {avg_loss:.4f} | Recall@{Config.K}: {recall:.4f} | NDCG@{Config.K}: {ndcg:.4f} | MRR@{Config.K}: {mrr:.4f} | Precision@{Config.K}: {precision:.4f}")
+            print(f"Epoch {epoch:03d} | Training Loss: {avg_loss:.4f} | Recall@{Config.K}: {recall:.4f} | NDCG@{Config.K}: {ndcg:.4f} | MRR@{Config.K}: {mrr:.4f} | Precision@{Config.K}: {precision:.4f}")
             
             if ndcg > best_ndcg:
                 best_ndcg = ndcg
@@ -88,8 +100,6 @@ def train():
                 }
                 torch.save(best_state, os.path.join(Config.CKPT_DIR, "best_model.pth"))
                 print(f"-> New best model saved! (NDCG@{Config.K}: {best_ndcg:.4f})")
-        else:
-            print(f"Epoch {epoch:03d} | Loss: {avg_loss:.4f}")
 
 if __name__ == "__main__":
     train()

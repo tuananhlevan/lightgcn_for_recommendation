@@ -1,3 +1,4 @@
 data/*.csv
+data/*.dat
 __pycache__
 load_metrics.py

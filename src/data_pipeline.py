@@ -42,6 +42,11 @@ def load_and_prep_movielens(split_type="random"):
     
     df = df[df['rating'] >= 3.0].copy()
     
+    # Ensure every user has at least 5 positive ratings before splitting
+    user_counts = df['userId'].value_counts()
+    valid_users = user_counts[user_counts >= 5].index
+    df = df[df['userId'].isin(valid_users)].copy()
+
     df['user_idx'], user_uniques = pd.factorize(df['userId'])
     df['item_idx'], item_uniques = pd.factorize(df['movieId'])
     

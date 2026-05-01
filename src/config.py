@@ -7,6 +7,7 @@ class Config:
 
     # --- Data & Graph Parameters ---
     TEST_SIZE = 0.2
+    BATCH_SIZE = 8192
     SPLIT_TYPE = "random"   # "temporal" for time-sequential split, "random" for random split
     
     # --- Model Hyperparameters ---
@@ -14,11 +15,11 @@ class Config:
     NUM_LAYERS = 3
 
     # --- Training Hyperparameters ---
-    EPOCHS = 300
-    LEARNING_RATE = 0.001
-    WEIGHT_DECAY = 0.0
-    EVAL_EPOCH = 20         # How often we calculate Recall@20
-    SAVE_EPOCH = 50         # How often do we save model routinely
+    EPOCHS = 100
+    LEARNING_RATE = 1e-3
+    REG_WEIGHT = 1e-4
+    EVAL_EPOCH = 5          # How often we calculate metrics
+    SAVE_EPOCH = 10         # How often do we save model
     
     # --- Evaluate Hyperparameters ---
     K = 20                  # Top K
