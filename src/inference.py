@@ -56,7 +56,8 @@ def recommend_for_user(raw_user_id, top_k=5):
     
     # 3. Inference
     with torch.no_grad():
-        user_embs, item_embs = model(train_edge_index)
+        bipartite_edges = model.get_graph(train_edge_index)
+        user_embs, item_embs, _ = model(bipartite_edges)
         target_user_vector = user_embs[model_user_idx]
         
         all_item_scores = torch.matmul(item_embs, target_user_vector)
