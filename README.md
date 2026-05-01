@@ -36,6 +36,14 @@ conda env create -f environment.yml
 conda activate lightgcn
 ```
 
+## Prepare Data
+Run the below command to download and preprocess the dataset MovieLens-1M
+```bash
+wget https://files.grouplens.org/datasets/movielens/ml-1m.zip
+unzip ml-1m.zip
+python data/get_csv.py --source ml-1m/ --output data/
+```
+
 ## Usage
 This project is controlled via a central command-line interface
 

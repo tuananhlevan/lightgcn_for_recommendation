@@ -3,3 +3,5 @@ data/*.dat
 __pycache__
 ckpt/*
 load_metrics.py
+run.sh
+log

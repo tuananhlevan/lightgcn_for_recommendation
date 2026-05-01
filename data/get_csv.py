@@ -1,5 +1,7 @@
 import pandas as pd
 
+import argparse
+
 def convert_ml_1m_to_csv(source_dir='.', output_dir='.'):
     # Define column names based on MovieLens 1M documentation
     ratings_cols = ['userId', 'movieId', 'rating', 'timestamp']
@@ -36,5 +38,11 @@ def convert_ml_1m_to_csv(source_dir='.', output_dir='.'):
     print("Conversion complete! Check your output directory.")
 
 if __name__ == "__main__":
-    # Ensure your .dat files are in the same folder or update the path
-    convert_ml_1m_to_csv()
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('--source', type=str, help="Source destination of raw data")
+    parser.add_argument('--output', type=str, help="Output destination of processed data")
+    
+    args = parser.parse_args()
+    
+    convert_ml_1m_to_csv(args.source, args.output)
