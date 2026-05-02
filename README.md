@@ -4,6 +4,16 @@ A highly optimized PyTorch Geometric implementation of **LightGCN** (Graph Convo
 
 This project trains a collaborative filtering model on the MovieLens-1M dataset. It accurately implements the simplified graph convolution matrix and base-embedding L2 regularization specified in the original LightGCN paper, optimized with batched tensor operations and asynchronous multiprocessing to run efficiently on modern hardware.
 
+## Benchmark Results
+The model was evaluated using a strict 5-core interaction filter. To ensure statistical significance and stability, the pipeline was run 5 independent times. A more comprehensive comparison can be found at the repo [ml-rec-sys](https://github.com/tuananhlevan/ml-rec-sys)
+
+| Metrics | Result |
+| :---: | :---: |
+| NDCG@20 | 0.3578 ± 0.0011 |
+| Recall@20 | 0.2604 ± 0.0012 |
+| MRR@20 | 0.6077 ± 0.0022 |
+| Precision@20 | 0.2630 ± 0.0009 |
+
 ## Features
 * **Vectorized BPR Data Pipeline:** Uses PyTorch DataLoaders with multiprocessing to fetch negative samples continuously without blocking the GPU (Only available on Linux-based operating systems)
 * **Memory-Safe Evaluation:** Computes NDCG@K, Recall@K, Precision@K, and MRR@K in chunks, preventing Out-Of-Memory (OOM) crashes on large datasets

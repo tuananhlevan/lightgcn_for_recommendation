@@ -15,11 +15,11 @@ class Config:
     NUM_LAYERS = 3
 
     # --- Training Hyperparameters ---
-    EPOCHS = 100
+    EPOCHS = 400
     LEARNING_RATE = 1e-3
     REG_WEIGHT = 1e-4
-    EVAL_EPOCH = 5          # How often we calculate metrics
-    SAVE_EPOCH = 10         # How often do we save model
+    EVAL_EPOCH = 20         # How often we calculate metrics
+    SAVE_EPOCH = 50        # How often do we save model
     
     # --- Evaluate Hyperparameters ---
     K = 20                  # Top K
